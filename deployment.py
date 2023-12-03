@@ -46,7 +46,7 @@ def block_system(source_IP, source_mac, dest_IP_address, dst_mac):
     # Block an IP address: sudo iptables -A INPUT -s <IP_ADDRESS> -j DROP
     # Unblock an IP address: sudo iptables -D INPUT -s <IP_ADDRESS> -j DROP
     # Block a MAC address: sudo ebtables -A INPUT -s <MAC_ADDRESS> -j DROP
-    # Unblock a MAC address: sudo ebtables -D INPUT -s <MAC_ADDRESS> -j DROP
+    # Unblock  MAC address: sudo ebtables -D INPUT -s <MAC_ADDRESS> -j DROP
     global interface
     host_IP = IP_address(interface)
     host_mac = mac_address(interface)

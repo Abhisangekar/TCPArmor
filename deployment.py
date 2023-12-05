@@ -10,6 +10,7 @@ import tkinter as tk
 from tkinter import messagebox
 import subprocess as sp
 from system_IP_mac import IP_address, mac_address
+import logging
 
 
 popup_opened = False        #initial condition that the pop up is not opened
@@ -17,7 +18,7 @@ popup_opened = False        #initial condition that the pop up is not opened
 def parsing():
     parser = op.OptionParser()
     parser.add_option('-i','--interface', dest='interface', help='Specify network interface')
-    parser.add_option("-m","--mode", dest='mode', help="Select mode between automatic and mannual")
+    parser.add_option("-m","--mode", dest='mode', help="Select mode between automatic and manual")
     return parser.parse_args()
 
 (options, arguments) = parsing()
@@ -29,13 +30,19 @@ YELLOW = Fore.YELLOW
 RESET = Style.RESET_ALL
 warnings.filterwarnings("ignore", category=UserWarning)
 
+host_IP = IP_address(interface)
+
 window = tk.Tk()
 window.withdraw()
 
-def file_write(IP, MAC):
-    file = open('Blocked.txt', 'w')
-    file.writelines([IP," ", MAC])
+logging.basicConfig(filename="Blocked.log", format='%(asctime)s %(message)s', filemode='w')
+logger = logging.getLogger()
 
+def file_write(IP, MAC):
+    #file = open('Blocked.txt', 'w')
+    #file.writelines([IP," ", MAC])
+    logger.critical("Threat neutralized "+IP)
+    
 def open_popup(source_IP, source_mac, dest_IP_address, dst_mac):
     global popup_opened
     if not popup_opened:
@@ -47,9 +54,7 @@ def block_system(source_IP, source_mac, dest_IP_address, dst_mac):
     # Unblock an IP address: sudo iptables -D INPUT -s <IP_ADDRESS> -j DROP
     # Block a MAC address: sudo ebtables -A INPUT -s <MAC_ADDRESS> -j DROP
     # Unblock  MAC address: sudo ebtables -D INPUT -s <MAC_ADDRESS> -j DROP
-    global interface
-    host_IP = IP_address(interface)
-    host_mac = mac_address(interface)
+    global host_IP
     if host_IP == source_IP:
         sp.call(['iptables', '-A', 'INPUT', '-s', dest_IP_address, '-j', 'DROP'])
         sp.call(['ebtables', '-A', 'INPUT', '-s', dst_mac, '-j', 'DROP'])
@@ -118,7 +123,12 @@ def TCP_prediction(data,source_IP, source_mac, dest_IP_address, dst_mac):
 
 def response(source_IP, source_mac, dest_IP_address, dst_mac):
     #mode = global mode
-    if mode == "mannual":
+    global host_IP
+    if host_IP == dest_IP_address:
+        logger.critical("Suspecious activity detected "+source_IP +' and '+source_mac)
+    elif host_IP == source_IP:
+        logger.critical("Suspecious activity detected "+dest_IP_address +' and '+dst_mac)
+    if mode == "manual":
         open_popup(source_IP, source_mac, dest_IP_address, dst_mac)
     elif mode == "automatic":
         block_system(source_IP, source_mac, dest_IP_address, dst_mac)
